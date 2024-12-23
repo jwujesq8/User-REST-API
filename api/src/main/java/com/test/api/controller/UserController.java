@@ -7,9 +7,10 @@ import com.test.api.dto.request.PUTUserRequestDto;
 import com.test.api.dto.response.ErrorMessageResponseDto;
 import com.test.api.dto.response.UserResponseDto;
 import com.test.api.dto.response.ValidationErrorMessageResponseDto;
-import com.test.api.service.GenderService;
-import com.test.api.service.UserService;
-import com.test.api.service.WebSocketNotificationService;
+import com.test.api.service.interfaces.GenderService;
+import com.test.api.service.NotificationService;
+import com.test.api.service.interfaces.UserService;
+//import com.test.api.service.WebSocketNotificationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -22,8 +23,6 @@ import jakarta.validation.Valid;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -44,7 +43,7 @@ public class UserController {
 
     private final UserService userService;
     private final GenderService genderService;
-    private final WebSocketNotificationService webSocketNotificationService;
+    private final NotificationService notificationService;
     @Getter
     private static Object requestBody;
 
@@ -104,6 +103,8 @@ public class UserController {
             @RequestBody @Valid POSTUserRequestDto postUserRequestDto){
 
         requestBody = postUserRequestDto;
+        String userRequiter = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        notificationService.sendUserActionNotification(userRequiter, "uses request POST /user/new");
         return userService.addUser(postUserRequestDto);
     }
 
@@ -163,6 +164,8 @@ public class UserController {
             @RequestBody @Valid IdDto idDto){
 
             requestBody = idDto;
+            String userRequiter = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+            notificationService.sendUserActionNotification(userRequiter, "uses request DELETE /user");
             return userService.deleteUser(idDto.getId());
     }
 
@@ -191,8 +194,6 @@ public class UserController {
     public List<UserResponseDto> getAllUsers(){
 
         requestBody = null;
-        String userRequiter = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        webSocketNotificationService.sendNotification("/topic", userRequiter,"use request GET user/list");
         return userService.getAllUsers();
 
     }
@@ -221,6 +222,8 @@ public class UserController {
             @RequestBody @Valid DeleteUsersListByIdDto deleteUsersListByIdDto){
 
         requestBody = deleteUsersListByIdDto;
+        String userRequiter = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        notificationService.sendUserActionNotification(userRequiter, "uses request DELETE user/list/range");
         return userService.deleteListOfUsersByStartAndEndId(
                     deleteUsersListByIdDto.getStartId(),deleteUsersListByIdDto.getEndId()
             );
@@ -251,6 +254,8 @@ public class UserController {
             @RequestBody @Valid IdDto idDto){
 
         requestBody = idDto;
+        String userRequiter = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        notificationService.sendUserActionNotification(userRequiter, "uses request DELETE user/list/asc");
         return userService.deleteListOfUsersByStartIdAsc(idDto.getId());
     }
 
